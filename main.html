@@ -354,3 +354,92 @@
 </head>
 <body>
   <div class="wrap">
+    <header>
+      <div class="logo">Peak<span>.tech</span></div>
+      <nav>
+        <button type="button" class="btn btn-ghost" data-nav="tasks">Tasks</button>
+        <button type="button" class="btn btn-ghost" data-nav="claim">Claim</button>
+        <button type="button" class="btn btn-ghost" data-nav="how">How</button>
+        <button type="button" class="btn btn-ghost" data-nav="about">About</button>
+        <button type="button" class="btn btn-ghost" data-nav="faq">FAQ</button>
+        <button type="button" class="btn btn-ghost" data-nav="config">Settings</button>
+        <button type="button" class="btn btn-ghost" data-nav="resources">Resources</button>
+        <button type="button" class="btn btn-wallet" id="btnWallet">Connect wallet</button>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h1>Find your inner dew</h1>
+      <p>Complete social tasks and claim droplets from the Dew-Drops airdrop. Connect your wallet to see active tasks and your eligibility.</p>
+      <div id="heroConnect" class="connect-panel">
+        <p>Connect your wallet to view tasks and claim rewards.</p>
+        <button type="button" class="btn btn-primary" id="btnConnect">Connect wallet</button>
+      </div>
+      <div id="heroStats" class="stats-grid hidden">
+        <div class="stat-box"><div class="value" id="statTasks">—</div><div class="label">Active tasks</div></div>
+        <div class="stat-box"><div class="value" id="statBalance">—</div><div class="label">Pool balance</div></div>
+        <div class="stat-box"><div class="value" id="statClaimed">—</div><div class="label">Total claimed</div></div>
+      </div>
+    </section>
+
+    <section id="secTasks" class="hidden">
+      <h2 class="section-title">Active tasks</h2>
+      <div class="card">
+        <div id="taskListContainer">
+          <p class="task-meta">Connect wallet and set RPC to load tasks.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="secClaim" class="hidden">
+      <h2 class="section-title">Check eligibility & claim</h2>
+      <div class="card">
+        <h2>Check eligibility</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">Enter task ID and your address to see if you're in the merkle tree (requires backend/Pura).</p>
+        <div class="input-group">
+          <label for="inpTaskId">Task ID (0x...)</label>
+          <input type="text" id="inpTaskId" placeholder="0x..." />
+        </div>
+        <div class="input-group">
+          <label for="inpAddress">Your address</label>
+          <input type="text" id="inpAddress" placeholder="0x..." />
+        </div>
+        <button type="button" class="btn btn-primary" id="btnCheckEligibility">Check eligibility</button>
+        <div id="eligibilityResult" class="eligibility-result hidden"></div>
+      </div>
+      <div class="card">
+        <h2>Claim droplet</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">After confirming eligibility, use Pura CLI or a connected wallet to submit the claim transaction.</p>
+        <div class="input-group">
+          <label for="inpClaimTaskId">Task ID</label>
+          <input type="text" id="inpClaimTaskId" placeholder="0x..." />
+        </div>
+        <div class="input-group">
+          <label for="inpProofNonce">Proof nonce</label>
+          <input type="text" id="inpProofNonce" placeholder="0x..." />
+        </div>
+        <button type="button" class="btn btn-primary" id="btnClaim" disabled>Claim (connect wallet first)</button>
+      </div>
+    </section>
+
+    <section id="secHow">
+      <h2 class="section-title">How it works</h2>
+      <div class="card">
+        <div class="step"><span class="step-num">1</span><p><strong>Complete social tasks</strong> — Follow, retweet, join, or other actions defined by the campaign.</p></div>
+        <div class="step"><span class="step-num">2</span><p><strong>Get included in the list</strong> — Guardians build a merkle tree of eligible addresses and proof nonces.</p></div>
+        <div class="step"><span class="step-num">3</span><p><strong>Claim your droplet</strong> — Use this UI or Pura CLI with your merkle proof to call the DewDrops contract.</p></div>
+        <div class="step"><span class="step-num">4</span><p><strong>Receive rewards</strong> — ETH is sent to your wallet immediately (or via vesting if the task uses vesting).</p></div>
+      </div>
+    </section>
+
+    <section id="secAbout">
+      <h2 class="section-title">About Dew-Drops</h2>
+      <div class="card about-section">
+        <h3>Find your inner dew</h3>
+        <p>Dew-Drops is an airdrop platform for social media tasks. Campaigns create tasks (e.g. follow on Twitter, join Discord), build a merkle tree of eligible participants, and fund a pool. You prove eligibility with a merkle proof and claim your reward on-chain.</p>
+        <h3>Task types</h3>
+        <p>Tasks are tagged by kind: Twitter, Discord, Telegram, retweet, quote, like, comment, join, share, watch, follow, or custom. Each task has a reward amount and an end block.</p>
+        <div class="task-kinds-grid" id="taskKindsList"></div>
+        <h3>Peak.tech & Pura</h3>
+        <p>Peak.tech is the web interface for Dew-Drops. Use the Pura CLI app to build merkle trees, check eligibility, and submit claims from the command line.</p>
+      </div>
