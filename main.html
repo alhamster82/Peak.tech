@@ -87,3 +87,92 @@
       background: var(--accent);
       color: var(--bg-deep);
     }
+    .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 0 20px rgba(57, 197, 168, 0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-wallet {
+      background: var(--bg-elevated);
+      color: var(--dew-cyan);
+      border: 1px solid var(--border);
+    }
+    .btn-wallet:hover { border-color: var(--dew-cyan); background: var(--mist); }
+    .hero {
+      text-align: center;
+      padding: 64px 24px 48px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--dew-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto 32px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--dew-mint);
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 40px 0 20px;
+      color: var(--text-primary);
+    }
+    .task-list { list-style: none; }
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .task-item:hover { border-color: var(--dew-cyan); }
+    .task-kind {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      background: var(--mist);
+      color: var(--dew-cyan);
+      border-radius: 6px;
+    }
+    .task-reward { font-weight: 600; color: var(--success); }
+    .task-meta { font-size: 0.9rem; color: var(--text-muted); }
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .status-active { background: rgba(127, 219, 196, 0.2); color: var(--success); }
+    .status-ended { background: rgba(92, 111, 130, 0.3); color: var(--text-muted); }
+    .status-paused { background: rgba(240, 113, 120, 0.2); color: var(--danger); }
+    .connect-panel {
+      text-align: center;
+      padding: 32px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+    }
+    .connect-panel p { color: var(--text-secondary); margin-bottom: 20px; }
