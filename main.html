@@ -443,3 +443,92 @@
         <h3>Peak.tech & Pura</h3>
         <p>Peak.tech is the web interface for Dew-Drops. Use the Pura CLI app to build merkle trees, check eligibility, and submit claims from the command line.</p>
       </div>
+    </section>
+
+    <section id="secFaq">
+      <h2 class="section-title">FAQ</h2>
+      <div class="card">
+        <div class="faq-item">
+          <h4>What is a merkle proof?</h4>
+          <p>A short proof that your address (and proof nonce) is in the campaign's list without revealing the full list. The contract verifies it against the stored merkle root.</p>
+        </div>
+        <div class="faq-item">
+          <h4>What is a proof nonce?</h4>
+          <p>A unique value per participant per task so each address can only claim once. It's included in the leaf hash with your address and task ID.</p>
+        </div>
+        <div class="faq-item">
+          <h4>Can I claim multiple tasks at once?</h4>
+          <p>Yes. The DewDrops contract supports claimDropletBatch for multiple tasks in one transaction (up to the contract's MAX_CLAIM_BATCH).</p>
+        </div>
+        <div class="faq-item">
+          <h4>What if a task has vesting?</h4>
+          <p>You first call claimDropletVested to lock in your eligibility; rewards then vest over time. Use claimVested (or Pura claim-vested) to pull claimable amounts.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="secConfig">
+      <h2 class="section-title">Settings</h2>
+      <div class="card">
+        <h2>Network & contract</h2>
+        <p class="mb-2 text-secondary" style="color: var(--text-secondary);">Set RPC URL and DewDrops contract address. Stored in localStorage.</p>
+        <div class="input-group">
+          <label for="inpRpcUrl">RPC URL</label>
+          <input type="text" id="inpRpcUrl" placeholder="https://rpc.sepolia.org" />
+        </div>
+        <div class="input-group">
+          <label for="inpContractAddr">Contract address</label>
+          <input type="text" id="inpContractAddr" placeholder="0x..." />
+        </div>
+        <button type="button" class="btn btn-primary mt-2" id="btnSaveConfig">Save</button>
+      </div>
+    </section>
+
+    <section id="secResources">
+      <h2 class="section-title">Resources</h2>
+      <div class="card">
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">Dew-Drops uses a single contract (DewDrops.sol) for task creation, pool funding, and claim verification via merkle proofs. Vesting is optional per task.</p>
+        <ul style="list-style: none; color: var(--text-secondary); font-size: 0.95rem;">
+          <li class="mb-1">· Contract: set address in Settings and open via Contract link in footer.</li>
+          <li class="mb-1">· Pura: CLI app to build merkle trees, check eligibility, and submit claims.</li>
+          <li class="mb-1">· Task kinds: twitter, discord, telegram, retweet, quote, like, comment, join, share, watch, follow, custom.</li>
+          <li class="mb-1">· Leaf = keccak256(abi.encodePacked(participant, proofNonce, taskId, DOMAIN_SEED)).</li>
+        </ul>
+        <div class="hr"></div>
+        <p class="text-sm muted mb-3">Quick reference: claim flow</p>
+        <ol class="list-plain text-sm muted leading-relaxed" start="1">
+          <li>Guardian creates task with merkle root and funds pool (topPool).</li>
+          <li>Participants receive proof (address + proofNonce + merkleProof) from campaign.</li>
+          <li>Participant calls claimDroplet(taskId, proofNonce, merkleProof) or uses Pura claim command.</li>
+          <li>Contract verifies proof and sends reward in ETH.</li>
+        </ol>
+        <div class="hr"></div>
+        <p class="text-sm muted mb-3">Vesting flow</p>
+        <p class="text-sm muted leading-relaxed">If a task has vesting enabled, use claimDropletVested instead of claimDroplet. Your reward is then locked and vests over blocks. Call claimVested(taskId) to withdraw claimable amounts as they unlock.</p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Peak.tech — Dew-Drops airdrop interface. Use with the DewDrops contract and Pura app.</p>
+      <p style="margin-top: 8px;"><a href="#" id="linkContract" class="link">Contract</a> · <a href="#" id="linkDocs" class="link">Docs</a></p>
+    </footer>
+  </div>
+
+  <script>
+    (function() {
+      const CONFIG = {
+        rpcUrl: 'https://rpc.sepolia.org',
+        contractAddress: null,
+        chainId: 11155111
+      };
+
+      let provider = null;
+      let signer = null;
+      let userAddress = null;
+
+      const el = (id) => document.getElementById(id);
+      const show = (id) => { const n = document.getElementById(id); if (n) n.classList.remove('hidden'); };
+      const hide = (id) => { const n = document.getElementById(id); if (n) n.classList.add('hidden'); };
+
+      function formatWei(wei) {
+        if (typeof wei !== 'string' && typeof wei !== 'number') return '—';
