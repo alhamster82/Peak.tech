@@ -710,3 +710,92 @@
             hide('heroStats');
           }
         });
+      }
+
+      // --- Contract selectors (first 4 bytes of keccak256) for common DewDrops view calls ---
+      const SELECTORS = {
+        taskCount: '0x2e7ba6ef',
+        getTask: '0x' + 'getTask(bytes32)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8),
+        hasFulfilled: '0x' + 'hasFulfilled(bytes32,bytes32)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8),
+        isTaskActive: '0x' + 'isTaskActive(bytes32)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8),
+        paused: '0x5e0d443f',
+        contractBalance: '0x12065fe0',
+        globalTotalClaimed: '0x' + 'globalTotalClaimed()'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8),
+        getTaskIdsPaginated: '0x' + 'getTaskIdsPaginated(uint256,uint256)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8),
+      };
+
+      function padHex(str, len) {
+        str = String(str).replace(/^0x/, '');
+        if (str.length >= len) return str.slice(-len);
+        return str.padStart(len, '0');
+      }
+
+      function encodeBytes32(hex) {
+        return padHex(hex, 64);
+      }
+
+      function encodeUint256(n) {
+        return padHex(typeof n === 'bigint' ? n.toString(16) : Number(n).toString(16), 64);
+      }
+
+      function buildCalldata(selector, ...args) {
+        let data = selector.replace(/^0x/, '');
+        for (const a of args) {
+          if (typeof a === 'string' && a.startsWith('0x')) data += padHex(a, 64);
+          else if (typeof a === 'number') data += encodeUint256(a);
+          else if (typeof a === 'bigint') data += encodeUint256(a);
+        }
+        return '0x' + data;
+      }
+
+      async function ethCall(to, data) {
+        const body = JSON.stringify({
+          jsonrpc: '2.0',
+          id: Math.floor(Math.random() * 1e9),
+          method: 'eth_call',
+          params: [{ to, data }, 'latest']
+        });
+        const res = await fetch(CONFIG.rpcUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error.message || 'RPC error');
+        return json.result;
+      }
+
+      function parseUint256(hex) {
+        if (!hex || hex === '0x') return 0n;
+        return BigInt(hex);
+      }
+
+      function saveConfig() {
+        try {
+          localStorage.setItem('peak_tech_config', JSON.stringify({
+            rpcUrl: CONFIG.rpcUrl,
+            contractAddress: CONFIG.contractAddress,
+            chainId: CONFIG.chainId
+          }));
+        } catch (e) {}
+      }
+
+      function loadConfigFromStorage() {
+        try {
+          const raw = localStorage.getItem('peak_tech_config');
+          if (raw) {
+            const o = JSON.parse(raw);
+            if (o.rpcUrl) CONFIG.rpcUrl = o.rpcUrl;
+            if (o.contractAddress) CONFIG.contractAddress = o.contractAddress;
+            if (o.chainId != null) CONFIG.chainId = o.chainId;
+          }
+        } catch (e) {}
+      }
+
+      loadConfigFromStorage();
+
+      function showAlert(msg, type) {
+        const id = 'alert-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'alert alert-' + (type || 'info');
+        div.textContent = msg;
+        document.querySelector('.wrap').insertBefore(div, document.querySelector('footer'));
+        setTimeout(() => { const n = document.getElementById(id); if (n) n.remove(); }, 5000);
+      }
