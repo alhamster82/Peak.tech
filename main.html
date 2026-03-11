@@ -621,3 +621,92 @@
           if (res.result && res.result !== '0x') {
             count = parseInt(res.result.slice(2), 16);
           }
+          if (count === 0) {
+            container.innerHTML = '<p class="task-meta">No tasks yet.</p>';
+            return;
+          }
+          let html = '<ul class="task-list">';
+          for (let i = 0; i < Math.min(count, 20); i++) {
+            html += '<li class="task-item"><span class="task-kind">task #' + i + '</span><span class="task-meta">—</span><span class="status-badge status-active">Active</span></li>';
+          }
+          html += '</ul>';
+          container.innerHTML = html;
+        } catch (e) {
+          container.innerHTML = '<p class="task-meta">Could not load tasks. Check RPC and contract.</p>';
+        }
+      }
+
+      function checkEligibility() {
+        const taskId = el('inpTaskId').value.trim();
+        const address = el('inpAddress').value.trim();
+        const resultEl = el('eligibilityResult');
+        if (!taskId || !address) {
+          resultEl.textContent = 'Enter task ID and address.';
+          resultEl.className = 'eligibility-result not-eligible';
+          show('eligibilityResult');
+          return;
+        }
+        resultEl.textContent = 'Eligibility is checked via Pura backend or Merkle file. Configure an API or use Pura CLI.';
+        resultEl.className = 'eligibility-result not-eligible';
+        show('eligibilityResult');
+      }
+
+      function doClaim() {
+        alert('Use your connected wallet with the DewDrops contract to call claimDroplet(taskId, proofNonce, merkleProof). Or use Pura CLI.');
+      }
+
+      el('btnConnect').addEventListener('click', connectWallet);
+      el('btnWallet').addEventListener('click', connectWallet);
+      el('btnCheckEligibility').addEventListener('click', checkEligibility);
+      el('btnClaim').addEventListener('click', doClaim);
+
+      document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-nav');
+          if (target === 'tasks') el('secTasks').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'claim') el('secClaim').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'how') el('secHow').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'about') el('secAbout').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'faq') el('secFaq').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'config') el('secConfig').scrollIntoView({ behavior: 'smooth' });
+          if (target === 'resources') el('secResources').scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+
+      function renderConfigInputs() {
+        const rpc = document.getElementById('inpRpcUrl');
+        const addr = document.getElementById('inpContractAddr');
+        if (rpc) rpc.value = CONFIG.rpcUrl || '';
+        if (addr) addr.value = CONFIG.contractAddress || '';
+      }
+      renderConfigInputs();
+
+      el('btnSaveConfig').addEventListener('click', () => {
+        const rpc = document.getElementById('inpRpcUrl').value.trim();
+        const addr = document.getElementById('inpContractAddr').value.trim();
+        if (rpc) CONFIG.rpcUrl = rpc;
+        if (addr) CONFIG.contractAddress = addr;
+        saveConfig();
+        showAlert('Settings saved.', 'info');
+      });
+
+      const TASK_KIND_NAMES = ['twitter', 'discord', 'telegram', 'retweet', 'quote', 'like', 'comment', 'join', 'share', 'watch', 'follow', 'custom'];
+      const taskKindsEl = document.getElementById('taskKindsList');
+      if (taskKindsEl) {
+        taskKindsEl.innerHTML = TASK_KIND_NAMES.map(name => '<span class="task-kind-pill">' + name + '</span>').join('');
+      }
+
+      if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length) {
+            userAddress = accounts[0];
+            el('btnWallet').textContent = shortAddress(userAddress);
+            el('btnConnect').textContent = shortAddress(userAddress);
+            el('inpAddress').value = userAddress;
+          } else {
+            userAddress = null;
+            el('btnWallet').textContent = 'Connect wallet';
+            show('heroConnect');
+            hide('heroStats');
+          }
+        });
