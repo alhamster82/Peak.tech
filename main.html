@@ -1155,3 +1155,92 @@
       function parseWei(etherStr) {
         const n = parseFloat(etherStr);
         if (isNaN(n)) return 0n;
+        return BigInt(Math.floor(n * 1e18));
+      }
+
+      function toBytes32(hex) {
+        const h = String(hex).replace(/^0x/, '');
+        if (h.length > 64) return '0x' + h.slice(-64);
+        return '0x' + h.padStart(64, '0');
+      }
+
+      function toAddress(hex) {
+        const h = String(hex).replace(/^0x/, '');
+        if (h.length > 40) return '0x' + h.slice(-40);
+        return '0x' + h.padStart(40, '0');
+      }
+
+      function chainIdToName(id) {
+        return getChainName(id);
+      }
+
+      function explorerAddressUrl(chainId, address) {
+        return getExplorerUrl(chainId, 'address', address);
+      }
+
+      function explorerTxUrl(chainId, txHash) {
+        return getExplorerUrl(chainId, 'tx', txHash);
+      }
+
+      function taskKindLabel(kindNum) {
+        return parseTaskKind(kindNum);
+      }
+
+      function allTaskKinds() {
+        return ['twitter', 'discord', 'telegram', 'retweet', 'quote', 'like', 'comment', 'join', 'share', 'watch', 'follow', 'custom'];
+      }
+
+      function isPausedState() {
+        return fetchPaused();
+      }
+
+      function refreshStats() {
+        loadStats();
+      }
+
+      // Peak.tech — Dew-Drops web interface. Find your inner dew.
+      // Compatible with DewDrops.sol and Pura CLI. Set contract in Settings.
+
+      function bytes32ToHex(b) {
+        if (typeof b !== 'string') return '0x';
+        return b.startsWith('0x') ? b : '0x' + b;
+      }
+
+      function hexToBytes32(hex) {
+        const h = String(hex).replace(/^0x/, '');
+        return h.length >= 64 ? h.slice(0, 64) : h.padStart(64, '0');
+      }
+
+      function addressToHex(addr) {
+        const a = String(addr).replace(/^0x/, '');
+        return '0x' + (a.length >= 40 ? a.slice(0, 40) : a.padStart(40, '0'));
+      }
+
+      function buildLeafHashHint() {
+        return 'keccak256(abi.encodePacked(participant, proofNonce, taskId, DOMAIN_SEED))';
+      }
+
+      function getDomainSeedString() {
+        return DOMAIN_SEED_STR;
+      }
+
+      function getMaxClaimBatch() { return MAX_CLAIM_BATCH; }
+      function getPageSize() { return PAGE_SIZE; }
+
+      // End Peak.tech script — Dew-Drops airdrop platform UI
+      // RPC and contract address are stored in localStorage (key: peak_tech_config)
+      // Task kinds: 0=twitter 1=discord 2=telegram 3=retweet 4=quote 5=like 6=comment 7=join 8=share 9=watch 10=follow 11=custom
+      // DewDrops contract: treasury, taskVerifier, guardianHub are immutable. Guardians create tasks and top pools.
+      // Merkle proof order: sort sibling pairs (left < right) when hashing; contract uses same order.
+      // Pura: pura init --chain sepolia --contract <addr> && pura list-tasks && pura build-merkle <taskId> --leaves leaves.json
+      // Vesting: claimDropletVested then claimVested(taskId) when cliff and duration allow.
+      // Address literals in contract: 40 hex chars after 0x (EIP-55 or lowercase).
+      // Peak.tech + Pura + DewDrops.sol = full airdrop stack.
+      function getVersion() { return '1.0'; }
+      function getAppName() { return 'Peak.tech'; }
+      function getProjectName() { return 'Dew-Drops'; }
+      // ---
+    })();
+  </script>
+</body>
+</html>
