@@ -977,3 +977,92 @@
           '<span class="status-badge ' + (task && task.disabled ? 'status-ended' : 'status-active') + '">' + (task && task.disabled ? 'Disabled' : 'Active') + '</span>' +
           '</li>';
       }
+      async function loadTasksWithDetails() {
+        const container = el('taskListContainer');
+        if (!CONFIG.contractAddress) {
+          container.innerHTML = '<p class="task-meta">Set contract address in Settings.</p>';
+          return;
+        }
+        container.innerHTML = '<p class="task-meta pulse">Loading…</p>';
+        try {
+          const count = await fetchTaskCount();
+          if (count === 0) {
+            container.innerHTML = '<p class="task-meta">No tasks.</p>';
+            return;
+          }
+          const limit = Math.min(count, 20);
+          let html = '<ul class="task-list">';
+          for (let i = 0; i < limit; i++) {
+            const tidReq = await fetch(CONFIG.rpcUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: i + 100,
+                method: 'eth_call',
+                params: [{ to: CONFIG.contractAddress, data: buildCalldata(SELECTORS.getTaskIdsPaginated || '0x', encodeUint256(i), encodeUint256(1)) }, 'latest']
+              })
+            });
+            const tidRes = await tidReq.json();
+            let taskIdHex = '0x' + '0'.repeat(64);
+            if (tidRes.result && tidRes.result !== '0x') {
+              const raw = tidRes.result.slice(2);
+              if (raw.length >= 64) taskIdHex = '0x' + raw.slice(-64);
+            }
+            const task = await callGetTask(taskIdHex);
+            html += createTaskRow(taskIdHex, task, i);
+          }
+          html += '</ul>';
+          container.innerHTML = html;
+        } catch (e) {
+          container.innerHTML = '<p class="task-meta">Error loading tasks. Check RPC and contract.</p>';
+        }
+      }
+      function showSection(sectionId) {
+        ['secTasks', 'secClaim', 'secHow', 'secAbout', 'secFaq', 'secConfig', 'secResources'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.toggle('hidden', id !== sectionId);
+        });
+      }
+      function setContractInConfig(addr) {
+        CONFIG.contractAddress = addr;
+        saveConfig();
+        renderConfigInputs();
+      }
+      function getStoredContract() {
+        return CONFIG.contractAddress || '';
+      }
+      function clearStoredConfig() {
+        try {
+          localStorage.removeItem('peak_tech_config');
+          CONFIG.rpcUrl = 'https://rpc.sepolia.org';
+          CONFIG.contractAddress = null;
+          CONFIG.chainId = 11155111;
+          renderConfigInputs();
+        } catch (e) {}
+      }
+      window.PeakTech = {
+        getConfig: () => ({ ...CONFIG }),
+        setRpc: (url) => { CONFIG.rpcUrl = url; saveConfig(); },
+        setContract: setContractInConfig,
+        getTaskCount: fetchTaskCount,
+        getTask: callGetTask,
+        formatWei,
+        formatBlockNumber,
+        parseTaskKind,
+        TASK_KIND_NAMES: ['twitter', 'discord', 'telegram', 'retweet', 'quote', 'like', 'comment', 'join', 'share', 'watch', 'follow', 'custom'],
+      };
+
+      // --- Contract ABI function signatures (for reference; real selectors need keccak256) ---
+      // getTask(bytes32) -> taskKind, rewardPerClaim, endBlock, merkleRoot, poolBalance, disabled, totalClaimed
+      // hasFulfilled(bytes32,bytes32) -> bool
+      // isTaskActive(bytes32) -> bool
+      // claimDroplet(bytes32,bytes32,bytes32[]) payable
+      // claimDropletBatch(bytes32[],bytes32[],bytes32[][]) payable
+      // claimDropletVested(bytes32,bytes32,bytes32[])
+      // claimVested(bytes32)
+      // getTaskIdsPaginated(uint256,uint256) -> bytes32[]
+      // taskCount() -> uint256
+      // paused() -> bool
+      // contractBalance() -> uint256
+      // globalTotalClaimed() -> uint256
