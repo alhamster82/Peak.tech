@@ -532,3 +532,92 @@
 
       function formatWei(wei) {
         if (typeof wei !== 'string' && typeof wei !== 'number') return '—';
+        const w = BigInt(wei);
+        if (w >= BigInt(1e18)) return (Number(w) / 1e18).toFixed(4) + ' ETH';
+        return w.toString() + ' wei';
+      }
+
+      function shortAddress(addr) {
+        if (!addr) return '';
+        return addr.slice(0, 6) + '…' + addr.slice(-4);
+      }
+
+      async function connectWallet() {
+        if (typeof window.ethereum === 'undefined') {
+          alert('No Ethereum wallet found. Install MetaMask or another Web3 wallet.');
+          return;
+        }
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          userAddress = accounts[0];
+          el('btnWallet').textContent = shortAddress(userAddress);
+          el('btnConnect').textContent = shortAddress(userAddress);
+          hide('heroConnect');
+          show('heroStats');
+          show('secTasks');
+          show('secClaim');
+          el('inpAddress').value = userAddress;
+          await loadStats();
+          await loadTasks();
+        } catch (e) {
+          console.error(e);
+          alert('Failed to connect: ' + (e.message || e));
+        }
+      }
+
+      async function loadStats() {
+        if (!CONFIG.contractAddress) {
+          el('statTasks').textContent = '—';
+          el('statBalance').textContent = '—';
+          el('statClaimed').textContent = '—';
+          return;
+        }
+        try {
+          const req = await fetch(CONFIG.rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'eth_call',
+              params: [{
+                to: CONFIG.contractAddress,
+                data: '0x' + 'taskCount()'.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('').slice(0, 8)
+              }, 'latest']
+            })
+          });
+          const res = await req.json();
+          if (res.result && res.result !== '0x') {
+            const count = parseInt(res.result, 16);
+            el('statTasks').textContent = count;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        el('statBalance').textContent = '—';
+        el('statClaimed').textContent = '—';
+      }
+
+      async function loadTasks() {
+        const container = el('taskListContainer');
+        if (!CONFIG.contractAddress) {
+          container.innerHTML = '<p class="task-meta">Set contract address in CONFIG to load tasks.</p>';
+          return;
+        }
+        container.innerHTML = '<p class="task-meta pulse">Loading tasks…</p>';
+        try {
+          const req = await fetch(CONFIG.rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'eth_call',
+              params: [{ to: CONFIG.contractAddress, data: '0x2e7ba6ef' }, 'latest']
+            })
+          });
+          const res = await req.json();
+          let count = 0;
+          if (res.result && res.result !== '0x') {
+            count = parseInt(res.result.slice(2), 16);
+          }
