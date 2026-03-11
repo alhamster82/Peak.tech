@@ -1066,3 +1066,92 @@
       // paused() -> bool
       // contractBalance() -> uint256
       // globalTotalClaimed() -> uint256
+      // userTotalClaimed(address) -> uint256
+      // getVestedAmount(bytes32,address) -> uint256
+      // --- End contract reference ---
+
+      function getBlockExplorerAddressUrl() {
+        if (!CONFIG.contractAddress) return null;
+        return getExplorerUrl(CONFIG.chainId, 'address', CONFIG.contractAddress);
+      }
+
+      function openContractInExplorer() {
+        const url = getBlockExplorerAddressUrl();
+        if (url) window.open(url, '_blank');
+      }
+
+      function getDefaultRpcForChain(chainId) {
+        const rpcs = {
+          1: 'https://eth.llamarpc.com',
+          11155111: 'https://rpc.sepolia.org',
+          8453: 'https://mainnet.base.org',
+          42161: 'https://arb1.arbitrum.io/rpc',
+        };
+        return rpcs[chainId] || CONFIG.rpcUrl;
+      }
+
+      function suggestRpc() {
+        const rpc = getDefaultRpcForChain(CONFIG.chainId);
+        if (document.getElementById('inpRpcUrl')) document.getElementById('inpRpcUrl').value = rpc;
+      }
+
+      function isValidEthAddress(addr) {
+        return validateAddress(addr);
+      }
+
+      function isValidTaskId(hex) {
+        return validateBytes32(hex);
+      }
+
+      function displayError(message) {
+        showAlert(message, 'warn');
+      }
+
+      function displaySuccess(message) {
+        showAlert(message, 'info');
+      }
+
+      function refreshTaskList() {
+        if (userAddress && CONFIG.contractAddress) loadTasks();
+      }
+
+      function getConnectedAddress() {
+        return userAddress || null;
+      }
+
+      function isConnected() {
+        return !!userAddress;
+      }
+
+      function getContractAddress() {
+        return CONFIG.contractAddress || null;
+      }
+
+      function getRpcUrl() {
+        return CONFIG.rpcUrl || '';
+      }
+
+      // --- Constants matching DewDrops.sol ---
+      const DEW_MIST_VERSION = 2;
+      const DEW_MAX_TASK_KIND = 12;
+      const DEW_MAX_CLAIM_BATCH = 88;
+      const DEW_PAGE_SIZE = 50;
+      const DEW_MAX_TASKS_PER_BATCH = 24;
+
+      function getDewConstants() {
+        return {
+          version: DEW_MIST_VERSION,
+          maxTaskKind: DEW_MAX_TASK_KIND,
+          maxClaimBatch: DEW_MAX_CLAIM_BATCH,
+          pageSize: DEW_PAGE_SIZE,
+          maxTasksPerBatch: DEW_MAX_TASKS_PER_BATCH,
+        };
+      }
+
+      function formatEther(wei) {
+        return weiToEther(wei);
+      }
+
+      function parseWei(etherStr) {
+        const n = parseFloat(etherStr);
+        if (isNaN(n)) return 0n;
