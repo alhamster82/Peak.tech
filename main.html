@@ -888,3 +888,92 @@
       }
 
       function truncateMiddle(str, start, end) {
+        if (!str || str.length <= start + end) return str;
+        return str.slice(0, start) + '…' + str.slice(-end);
+      }
+
+      function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+          showAlert('Copied to clipboard.', 'info');
+        }
+      }
+
+      function getChainName(chainId) {
+        const map = { 1: 'Ethereum', 11155111: 'Sepolia', 8453: 'Base', 42161: 'Arbitrum One' };
+        return map[chainId] || 'Chain ' + chainId;
+      }
+
+      function getExplorerUrl(chainId, type, value) {
+        const base = chainId === 1 ? 'https://etherscan.io' : chainId === 11155111 ? 'https://sepolia.etherscan.io' : '';
+        if (!base) return '#';
+        if (type === 'address') return base + '/address/' + value;
+        if (type === 'tx') return base + '/tx/' + value;
+        return base;
+      }
+
+      function debounce(fn, ms) {
+        let t;
+        return function (...args) {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, args), ms);
+        };
+      }
+
+      const debouncedLoadTasks = debounce(loadTasks, 300);
+
+      function initConfigFromStorage() {
+        loadConfigFromStorage();
+        renderConfigInputs();
+      }
+      initConfigFromStorage();
+
+      // --- Additional helpers for future use (Peak.tech + DewDrops) ---
+      function buildGetTaskCalldata(taskIdHex) {
+        const sel = '0x' + 'getTask(bytes32)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8);
+        return buildCalldata(sel, taskIdHex);
+      }
+      function buildHasFulfilledCalldata(taskIdHex, proofNonceHex) {
+        const sel = '0x' + 'hasFulfilled(bytes32,bytes32)'.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0).toString(16).padStart(8, '0').slice(-8);
+        return buildCalldata(sel, taskIdHex, proofNonceHex);
+      }
+      async function callGetTask(taskIdHex) {
+        if (!CONFIG.contractAddress) return null;
+        const data = buildGetTaskCalldata(taskIdHex);
+        const result = await ethCall(CONFIG.contractAddress, data);
+        if (!result || result === '0x') return null;
+        const len = 32;
+        const slices = [];
+        for (let i = 2; i < result.length; i += len * 2) {
+          slices.push('0x' + result.slice(i, i + len * 2));
+        }
+        return {
+          taskKind: parseInt(slices[0], 16),
+          rewardPerClaim: parseUint256(slices[1]),
+          endBlock: parseUint256(slices[2]),
+          merkleRoot: slices[3],
+          poolBalance: parseUint256(slices[4]),
+          disabled: parseInt(slices[5], 16) !== 0,
+          totalClaimed: parseUint256(slices[6]),
+        };
+      }
+      function formatTaskForDisplay(task) {
+        if (!task) return { kind: '—', reward: '—', endBlock: '—', pool: '—', disabled: '—', claimed: '—' };
+        return {
+          kind: parseTaskKind(task.taskKind),
+          reward: formatWei(task.rewardPerClaim),
+          endBlock: formatBlockNumber(task.endBlock),
+          pool: formatWei(task.poolBalance),
+          disabled: task.disabled ? 'Yes' : 'No',
+          claimed: formatWei(task.totalClaimed),
+        };
+      }
+      function createTaskRow(taskId, task, index) {
+        const d = formatTaskForDisplay(task);
+        return '<li class="task-item">' +
+          '<span class="task-kind">' + d.kind + '</span>' +
+          '<span class="task-reward">' + d.reward + '</span>' +
+          '<span class="task-meta">end ' + d.endBlock + ' · pool ' + d.pool + '</span>' +
+          '<span class="status-badge ' + (task && task.disabled ? 'status-ended' : 'status-active') + '">' + (task && task.disabled ? 'Disabled' : 'Active') + '</span>' +
+          '</li>';
+      }
