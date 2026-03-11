@@ -799,3 +799,92 @@
         document.querySelector('.wrap').insertBefore(div, document.querySelector('footer'));
         setTimeout(() => { const n = document.getElementById(id); if (n) n.remove(); }, 5000);
       }
+
+      el('linkContract').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (CONFIG.contractAddress) {
+          const base = CONFIG.chainId === 11155111 ? 'https://sepolia.etherscan.io' : 'https://etherscan.io';
+          window.open(base + '/address/' + CONFIG.contractAddress, '_blank');
+        } else showAlert('Set contract address first (e.g. in config or CONFIG in script).', 'warn');
+      });
+
+      el('linkDocs').addEventListener('click', (e) => {
+        e.preventDefault();
+        showAlert('Docs: see DewDrops.sol NatSpec and Pura CLI --help.', 'info');
+      });
+
+      // --- Dew-Drops domain seed (must match contract DOMAIN_SEED) ---
+      const DOMAIN_SEED_STR = 'DewDrops.Mist.v2';
+      const MAX_CLAIM_BATCH = 88;
+      const PAGE_SIZE = 50;
+
+      function isHex(s) {
+        if (typeof s !== 'string') return false;
+        const h = s.replace(/^0x/, '');
+        return h.length === 40 || h.length === 64 && /^[0-9a-fA-F]+$/.test(h);
+      }
+
+      function validateAddress(addr) {
+        return addr && addr.length >= 40 && isHex(addr);
+      }
+
+      function validateBytes32(hex) {
+        const h = String(hex).replace(/^0x/, '');
+        return h.length === 64 && /^[0-9a-fA-F]+$/.test(h);
+      }
+
+      function formatBlockNumber(n) {
+        if (n == null) return '—';
+        const b = typeof n === 'bigint' ? n : BigInt(n);
+        return b.toString();
+      }
+
+      function parseTaskKind(kindNum) {
+        const names = ['twitter', 'discord', 'telegram', 'retweet', 'quote', 'like', 'comment', 'join', 'share', 'watch', 'follow', 'custom'];
+        return names[Number(kindNum)] || 'custom';
+      }
+
+      async function fetchTaskCount() {
+        if (!CONFIG.contractAddress) return 0;
+        try {
+          const data = buildCalldata(SELECTORS.taskCount);
+          const result = await ethCall(CONFIG.contractAddress, data);
+          return Number(parseUint256(result));
+        } catch (e) {
+          console.error(e);
+          return 0;
+        }
+      }
+
+      async function fetchPaused() {
+        if (!CONFIG.contractAddress) return false;
+        try {
+          const result = await ethCall(CONFIG.contractAddress, SELECTORS.paused);
+          return result === '0x' + '1'.padStart(64, '0').slice(-64) || result === '0x0000000000000000000000000000000000000000000000000000000000000001';
+        } catch (e) {
+          return false;
+        }
+      }
+
+      async function fetchContractBalance() {
+        if (!CONFIG.contractAddress) return 0n;
+        try {
+          const body = JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_getBalance',
+            params: [CONFIG.contractAddress, 'latest']
+          });
+          const res = await fetch(CONFIG.rpcUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+          const json = await res.json();
+          if (json.result) return parseUint256(json.result);
+        } catch (e) {}
+        return 0n;
+      }
+
+      function weiToEther(wei) {
+        if (typeof wei === 'bigint') return Number(wei) / 1e18;
+        return Number(wei) / 1e18;
+      }
+
+      function truncateMiddle(str, start, end) {
